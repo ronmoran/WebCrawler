@@ -1,4 +1,5 @@
 import platform
+import logging
 from arrow import Arrow
 from os import environ
 from os.path import join as join_path
@@ -17,7 +18,7 @@ class TinyWriter:
     """
     Class to handle writing to a TinyDB database. Only supports JSON databases.
     """
-    _unknown_authors = ["anonymous", "unknown", "none"]
+    _unknown_authors = ["anonymous", "unknown", str(None).lower()]
 
     def __init__(self, timezone="UTC", strip=True, db_location=join_path(_determine_home_dir(), "db.json")):
         """
@@ -30,6 +31,8 @@ class TinyWriter:
         self.should_strip = strip
         self.__db = TinyDB(db_location)
         self.__location = db_location
+        self._logger = logging.getLogger("Crawler")
+        self._logger.debug("Opened tinydb at %s" % db_location)
 
     def write_json_entries(self, jsons_to_write):
         """
@@ -37,6 +40,7 @@ class TinyWriter:
         :param list[dict[str]]] jsons_to_write: All jsons to insert into the database.
         All objects MUST be json serializalbe.
         """
+        self._logger.info("Writing %d new JSONs" % len(jsons_to_write))
         for json_to_write in jsons_to_write:
             self._reformat_json(json_to_write)
         self.__db.insert_multiple(jsons_to_write)
@@ -47,6 +51,7 @@ class TinyWriter:
 
     @db_location.setter
     def db_location(self, db_location):
+        self._logger.debug("Changed path to %s" % db_location)
         self.__db = TinyDB(db_location)
         self.__location = db_location
 
@@ -66,11 +71,11 @@ class TinyWriter:
 
         for key in dict_to_write:
             if key == "timestamp":
-                arrow_date = Arrow.fromtimestamp(dict_to_write[key], self.timezone)
+                arrow_date = Arrow.fromtimestamp(dict_to_write[key]).replace(tzinfo=self.timezone)
                 val = arrow_date.for_json()
             elif key == "author":
                 author = dict_to_write[key]
-                val = author if author.lower() not in TinyWriter._unknown_authors else "Unknown"
+                val = author if str(author).lower() not in TinyWriter._unknown_authors else "Unknown"
             else:
                 val = dict_to_write[key].strip() if self.should_strip else dict_to_write[key]
             if type(val) == str:
