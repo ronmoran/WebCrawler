@@ -4,7 +4,7 @@ from stem import SocketError
 from stem.control import Controller
 from stem.process import launch_tor_with_config
 
-TOR_COMMAND = os.environ.get("TOR_CMD", r"C:\Users\Ron\Tor Browser\Browser\TorBrowser\Tor\tor.exe")
+TOR_COMMAND = os.environ.get("TOR_CMD", "/usr/sbin/tor")
 
 
 class TorRequest(object):

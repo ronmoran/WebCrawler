@@ -78,7 +78,7 @@ class TorNavigator:
         """
         if not fields:
             fields = TorNavigator.relevant_paste_fields
-        self._logger.debug("Keeping these fields: %s" % ", ".join(fields))
+        self._logger.debug("Saving these fields: %s" % ", ".join(fields))
         minimized_jsons = []
         for paste_json in paste_jsons:
             minimized = {field: paste_json[field] for field in fields}

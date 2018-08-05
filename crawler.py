@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import click
 import logging
+import os
 from logging import handlers
 from src import TinyWriter, TorNavigator
 from time import sleep
@@ -39,7 +40,8 @@ def crawl(tor_navigator, tiny_writer):
 @click.option("--single", "-s", is_flag=True, help="Whether to have a single crawl only")
 @click.option("--timestamp", type=click.FLOAT, default=None,
               help="Override current timestamp with this option, given in seconds since epoch")
-def main(log_path, sample_wait, debug, single, timestamp):
+@click.option("--db-path", type=click.STRING, default="/tmp/db_loc/db.json")
+def main(log_path, sample_wait, debug, single, timestamp, db_path):
     """
     Runner of the crawler.
     Pass log-path if you're interesting in keeping the path, or --sample-wait to change sampling rate
@@ -49,7 +51,10 @@ def main(log_path, sample_wait, debug, single, timestamp):
         tor_navigator = TorNavigator(timestamp=timestamp)
     else:
         tor_navigator = TorNavigator()
-    tiny_writer = TinyWriter()
+    if os.path.exists(os.path.dirname(db_path)):
+        tiny_writer = TinyWriter(db_path)
+    else:
+        tiny_writer = TinyWriter()
     logger = logging.getLogger("Crawler")
     logger.info("Starting crawler")
     if not single:
