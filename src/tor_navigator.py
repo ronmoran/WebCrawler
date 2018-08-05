@@ -12,10 +12,20 @@ class _Formats(Enum):
 
 
 class TorNavigator:
-    __relevant_paste_fields = ["timestamp", "title", "author", "data"]
+    """
+    Check all paste sites compliant with "Sticky Notes" API. Look here for further details:
+    https://sayakb.github.io/sticky-notes/pages/api/
+    """
+    relevant_paste_fields = ["timestamp", "title", "author", "data"]
 
-    def __init__(self, api_format="json"):
-        self.__set_last_crawl(str(time()))
+    def __init__(self, api_format="json", timestamp=time(), paste_url="http://nzxj65x32vh2fkhk.onion/"):
+        """
+        Start a navigation session to a paste website
+        :param str api_format: The format in which to get results from the website. Only "json" is currently supported.
+        :param float timestamp: The timestamp from which to start recording the pastes
+        :param str paste_url: The onion url of the paste site
+        """
+        self.__set_last_crawl(str(timestamp))
         self.last_crawl = property(fget=self.__get_last_crawl, fset=self.__set_last_crawl)
         enum_val = _Formats(api_format)
         if enum_val != _Formats.JSON:
@@ -24,7 +34,7 @@ class TorNavigator:
                 "as the paste site doesn't behave as expected in other formats.")
         self.__format = enum_val
         self.resource_url = "/".join(("api", _Formats(api_format).value))
-        self.paste_url = "http://nzxj65x32vh2fkhk.onion/"
+        self.paste_url = paste_url
         self._tor_proxy_request = TorRequest()
         self._logger = logging.getLogger("Crawler")
 
@@ -60,8 +70,14 @@ class TorNavigator:
         return self.__last_crawl
 
     def minimize_paste_fields(self, paste_jsons, *fields):
+        """
+        Keep only a few fields from the paste json
+        :param list[dict[str]] paste_jsons:
+        :param str fields: The name of the fields to keep
+        :rtype: list[dict[str]]
+        """
         if not fields:
-            fields = TorNavigator.__relevant_paste_fields
+            fields = TorNavigator.relevant_paste_fields
         self._logger.debug("Keeping these fields: %s" % ", ".join(fields))
         minimized_jsons = []
         for paste_json in paste_jsons:
