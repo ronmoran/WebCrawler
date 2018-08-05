@@ -1,0 +1,6 @@
+stem
+requests
+pysocks
+tinydb
+arrow
+click
