@@ -65,10 +65,11 @@ class TinyWriter:
 
     def _reformat_json(self, dict_to_write):
         """
+        In-place reformatting method for a consistent format between objects.
         :param dict dict_to_write: Formats all JSONs to write out
         :return: None, changes the JSON in place
         """
-
+        self._logger.debug("Reformatting JSON: %s" % str(dict_to_write))
         for key in dict_to_write:
             if key == "timestamp":
                 arrow_date = Arrow.fromtimestamp(dict_to_write[key]).replace(tzinfo=self.timezone)
@@ -77,7 +78,8 @@ class TinyWriter:
                 author = dict_to_write[key]
                 val = author if str(author).lower() not in TinyWriter._unknown_authors else "Unknown"
             else:
-                val = dict_to_write[key].strip() if self.should_strip else dict_to_write[key]
+                val = str(dict_to_write[key]).strip() if self.should_strip and type(dict_to_write[key]) == str\
+                    else dict_to_write[key]
             if type(val) == str:
                 val.replace("\r\n", "\n")
             dict_to_write[key] = val

@@ -2,6 +2,7 @@
 import click
 import logging
 import os
+import sys
 from logging import handlers
 from src import TinyWriter, TorNavigator
 from time import sleep
@@ -16,6 +17,13 @@ def set_logger(disk_log_path=None, level=logging.INFO):
     rotate = handlers.RotatingFileHandler(disk_log_path, maxBytes=1024*1024)
     logger.addHandler(rotate)
     rotate.setFormatter(logging.Formatter(fmt))
+
+    def new_excepthook(exctype, value, traceback):
+        if exctype == KeyboardInterrupt:
+            sys.__excepthook__(exctype, value, traceback)
+            logger.error("Got a keyboard Interrupt, crawler stopping")
+        logger.error("Unhandled exception:\n", exc_info=(exctype, value, traceback))
+    sys.excepthook = new_excepthook
 
 
 def crawl(tor_navigator, tiny_writer):
@@ -46,13 +54,16 @@ def main(log_path, sample_wait, debug, single, timestamp, db_path):
     Runner of the crawler.
     Pass log-path if you're interesting in keeping the path, or --sample-wait to change sampling rate
     """
-    set_logger(log_path, debug)
+    if debug:
+        set_logger(log_path, logging.DEBUG)
+    else:
+        set_logger(log_path)
     if timestamp is not None:
         tor_navigator = TorNavigator(timestamp=timestamp)
     else:
         tor_navigator = TorNavigator()
     if os.path.exists(os.path.dirname(db_path)):
-        tiny_writer = TinyWriter(db_path)
+        tiny_writer = TinyWriter(db_location=db_path)
     else:
         tiny_writer = TinyWriter()
     logger = logging.getLogger("Crawler")
@@ -63,6 +74,7 @@ def main(log_path, sample_wait, debug, single, timestamp, db_path):
             wait = sample_wait * 3600
             logger.info("Logger halting for %d seconds" % wait)
             sleep(wait)
+    logger.info("Crawler leaving! Goodbye")
 
 
 if __name__ == "__main__":

@@ -40,7 +40,9 @@ class TorNavigator:
 
     def _list_pastes(self, page_num):
         resp = self.__make_tor_request("list", str(page_num))
-        return self._parse_res_as_json(resp)["result"]["pastes"]
+        page_list = self._parse_res_as_json(resp)["result"]["pastes"]
+        self._logger.debug("Found %d pastes in page" % len(page_list))
+        return page_list
 
     def _parse_res_as_json(self, resp):
         if self.__format == _Formats.JSON:
@@ -54,17 +56,20 @@ class TorNavigator:
     def __make_tor_request(self, *args):
         resource_location = "/".join((self.resource_url, *args))
         full_url = urljoin(self.paste_url, resource_location)
+        self._logger.debug("Asking TOR for URL %s" % full_url)
         return self._tor_proxy_request.get_with_refresh(full_url)
 
     def _get_paste(self, paste_id):
         paste_info = self.__make_tor_request("show", paste_id)
-        return self._parse_res_as_json(paste_info)["result"]
+        res = self._parse_res_as_json(paste_info)["result"]
+        self._logger.debug("Found new paste with paste_id %s" % paste_id)
+        return res
 
     def __set_last_crawl(self, timestamp=str(time())):
         if type(timestamp) == Arrow:
             self.__last_crawl = timestamp
         else:
-            self.__last_crawl = Arrow.fromtimestamp(str(timestamp))
+            self.__last_crawl = Arrow.fromtimestamp(str(timestamp)).replace(tzinfo="UTC")
 
     def __get_last_crawl(self):
         return self.__last_crawl
@@ -100,7 +105,8 @@ class TorNavigator:
                 break
             for paste_id in current_pastes:
                 paste_json = self._get_paste(paste_id)
-                if oldest_timestamp is None or Arrow.fromtimestamp(paste_json["timestamp"]) < oldest_timestamp:
+                if oldest_timestamp is None or \
+                        Arrow.fromtimestamp(paste_json["timestamp"]).replace(tzinfo="UTC") < oldest_timestamp:
                     oldest_timestamp = Arrow.fromtimestamp(paste_json["timestamp"])
                 if oldest_timestamp > self.__last_crawl:
                     new_pastes.append(paste_json)
