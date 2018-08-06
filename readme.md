@@ -26,6 +26,9 @@ As this is not a package, there is no ```setup.py``` file.
 
 
 ### Using
+There is an issue with stem, where hundreds of lines of a failed tor connection are printed out to screen.
+
+Ignore them. If you use the log on disk it won't contain these lines.
 #### Script
 It's possible to use the package with the script.
 Make sure you're in the path of the project and run:
@@ -44,10 +47,10 @@ python3 crawler.py --db-path /var/lib/crawler/json.db --timestamp 0 --log-path /
 #### Docker
 
 You must have docker installed for this.
-just docker pull dockeronmoran/tordocker:latest and run it:
+just docker pull dockeronmoran/tordockercrawler:latest and run it:
 ```$xslt
-docker pull dockerronmoran/tordocker:latest
-docker run [-d] --name "crawler" dockerronmoran/tordocker:latest --name crawler
+docker pull dockeronmoran/tordockercrawler:latest
+docker run [-d] --name "crawler" dockeronmoran/tordockercrawler:latest --name crawler
 ```
 Should you want to get a shell of the docker:
 ```$xslt
